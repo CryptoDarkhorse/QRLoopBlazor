@@ -1,9 +1,7 @@
 ﻿@page "/"
 
-<PageTitle>Index</PageTitle>
+@using Syncfusion.Blazor.BarcodeGenerator
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+<SfQRCodeGenerator Width="500px" Height="500px" Value="This is a sample project for QRLoop">
+    <QRCodeGeneratorDisplayText Text="QR Code"></QRCodeGeneratorDisplayText>
+</SfQRCodeGenerator>
