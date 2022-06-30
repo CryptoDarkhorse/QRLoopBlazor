@@ -1,0 +1,39 @@
+﻿@using BlazorZXingJs
+
+@inject IJSRuntime JsRunTime
+
+<h3>QRReader</h3>
+
+<MultiFormatReader
+    VideoWidth="400"
+    VideoHeight="400"
+    OnBarcodeRead="BarcodeRead">
+
+    <VideoForbidden>
+        <h4>no permission for videodevice</h4>
+    </VideoForbidden>
+
+    <NoVideoDevices>
+        <h4>no devices available</h4>
+    </NoVideoDevices>
+</MultiFormatReader>
+
+<h4>Reading... @progress</h4>
+<h4>@LocalBarcodeText</h4>
+
+@code {
+    private string LocalBarcodeText;
+    private Object frames = null;
+    private float progress = 0;
+
+    private async void BarcodeRead(string code)
+    {
+        frames = await JsRunTime.InvokeAsync<Object>("MyLib.ParseFrames", new Object[] { frames, code });
+        if (await JsRunTime.InvokeAsync<bool>("MyLib.IsComplete", new Object[] { frames })) {
+            LocalBarcodeText = await JsRunTime.InvokeAsync<string>("MyLib.GetFrameData", new Object[] { frames });
+        } else {
+            progress = await JsRunTime.InvokeAsync<float>("MyLib.GetProgress", new Object[] { frames });
+        }
+        StateHasChanged();
+    }
+}
