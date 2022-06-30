@@ -10,7 +10,6 @@
     <PackageReference Include="BlazorZXingJs" Version="0.5.13" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0" PrivateAssets="all" />
-    <PackageReference Include="Syncfusion.Blazor.BarcodeGenerator" Version="20.2.0.36" />
   </ItemGroup>
 
   <ItemGroup>

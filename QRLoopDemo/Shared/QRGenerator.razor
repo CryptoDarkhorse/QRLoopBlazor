@@ -1,4 +1,4 @@
-﻿@using Syncfusion.Blazor.BarcodeGenerator
+﻿@using BlazorZXingJs
 
 @inject IJSRuntime JsRunTime
 
@@ -13,24 +13,29 @@
 </div>
 
 <p>Total Frames: @numFrames</p>
-<SfQRCodeGenerator Width="400px" Height="400px" Value="@CurrentFrame">
-    <QRCodeGeneratorDisplayText Text="QR Code"></QRCodeGeneratorDisplayText>
-</SfQRCodeGenerator>
+<QRCodeWriter Text="@CurrentFrame" Width="400" Heigth="400"></QRCodeWriter>
 
 @code
 {
     private String msg = "";
     private String CurrentFrame = "";
     private String[] frames;
-    private int cur;
+    private int cur = 0;
     private System.Threading.Timer? timer = null;
     private int numFrames = 0;
 
     async void GenerateQR()
     {
+        if (timer != null)
+        {
+            await timer.DisposeAsync();
+            timer = null;
+        }
+
         frames = await JsRunTime.InvokeAsync<string[]>("MyLib.GetFrames", new Object[] { msg, 120, 2 });
 
         numFrames = frames.Length;
+        cur = 0;
 
         timer = new System.Threading.Timer(async (object? stateInfo) =>
 		{
