@@ -1,0 +1,43 @@
+﻿@using Syncfusion.Blazor.BarcodeGenerator
+
+@inject IJSRuntime JsRunTime
+
+<h3>QRGenerator</h3>
+
+<div class="row m-1">
+<textarea @bind="@msg" style="height:300px" @oninput="@((e) => { msg=(string)e.Value;})" />
+</div>
+
+<div class="row m-1">
+<button class="btn btn-primary" @onclick="@GenerateQR">Generate QR Code</button>
+</div>
+
+<p>Total Frames: @numFrames</p>
+<SfQRCodeGenerator Width="400px" Height="400px" Value="@CurrentFrame">
+    <QRCodeGeneratorDisplayText Text="QR Code"></QRCodeGeneratorDisplayText>
+</SfQRCodeGenerator>
+
+@code
+{
+    private String msg = "";
+    private String CurrentFrame = "";
+    private String[] frames;
+    private int cur;
+    private System.Threading.Timer? timer = null;
+    private int numFrames = 0;
+
+    async void GenerateQR()
+    {
+        frames = await JsRunTime.InvokeAsync<string[]>("MyLib.GetFrames", new Object[] { msg, 120, 2 });
+
+        numFrames = frames.Length;
+
+        timer = new System.Threading.Timer(async (object? stateInfo) =>
+		{
+            CurrentFrame = frames[cur];
+            cur = (cur + 1) % frames.Length;
+			StateHasChanged();
+		}, new System.Threading.AutoResetEvent(false), 0, 300);
+
+    }
+}

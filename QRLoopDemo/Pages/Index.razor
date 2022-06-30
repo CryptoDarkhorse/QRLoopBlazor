@@ -1,7 +1,20 @@
 ﻿@page "/"
 
-@using Syncfusion.Blazor.BarcodeGenerator
+<QRGenerator />
 
-<SfQRCodeGenerator Width="500px" Height="500px" Value="This is a sample project for QRLoop">
-    <QRCodeGeneratorDisplayText Text="QR Code"></QRCodeGeneratorDisplayText>
-</SfQRCodeGenerator>
+@*@inject IJSRuntime JsRunTime
+
+<button class="btn btn-primary" @onclick="@GetCurrentTime" value=""> @CurrentTime</button>
+
+@code {
+    private MarkupString CurrentTime = new MarkupString("");
+
+    async void GetCurrentTime()
+    {
+        var dateTime = await JsRunTime.InvokeAsync<string[]>("MyLib.GetCurrentTime","This is test string");
+
+        CurrentTime = new MarkupString(dateTime[0]);
+
+        StateHasChanged();
+    }
+}*@

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -11,5 +11,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.0" PrivateAssets="all" />
     <PackageReference Include="Syncfusion.Blazor.BarcodeGenerator" Version="20.2.0.36" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\js\" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Condition="$(Configuration) == 'Debug'" Command="cd JS &amp;&amp; npm run build" />
+    <Exec Condition="$(Configuration) == 'Release'" Command="cd JS &amp;&amp; npm run build" />
+  </Target>
 
 </Project>
