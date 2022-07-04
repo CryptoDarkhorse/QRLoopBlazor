@@ -37,7 +37,7 @@
         numFrames = frames.Length;
         cur = 0;
 
-        timer = new System.Threading.Timer(async (object? stateInfo) =>
+        timer = new System.Threading.Timer( (object? stateInfo) =>
 		{
             CurrentFrame = frames[cur];
             cur = (cur + 1) % frames.Length;

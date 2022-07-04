@@ -25,22 +25,22 @@
 </pre>
 
 @code {
-    private string LocalBarcodeText;
-    private Object frames = null;
+    private string? LocalBarcodeText;
+    private Object? frames;
     private double progress = 0;
 
     private async void BarcodeRead(string code)
     {
-        Object[] res = await JsRunTime.InvokeAsync<Object[]>("MyLib.ParseFrames", new Object[] { frames, code });
+        Object[] res = await JsRunTime.InvokeAsync<Object[]>("MyLib.ParseFrames", new Object?[] { frames, code });
 
-        if (res[0].ToString().Equals("1"))
+        if ("1".Equals(res[0].ToString()))
         {
             LocalBarcodeText = res[1].ToString();
         } 
         else
         {
             frames = res[1];
-            progress = await JsRunTime.InvokeAsync<double>("MyLib.GetProgress", new Object[] { frames });
+            progress = await JsRunTime.InvokeAsync<double>("MyLib.GetProgress", new Object?[] { frames });
             progress = Math.Floor(progress * 100);
         }
         StateHasChanged();
