@@ -1,20 +1,3 @@
 ﻿@page "/"
 
 <QRGenerator />
-
-@*@inject IJSRuntime JsRunTime
-
-<button class="btn btn-primary" @onclick="@GetCurrentTime" value=""> @CurrentTime</button>
-
-@code {
-    private MarkupString CurrentTime = new MarkupString("");
-
-    async void GetCurrentTime()
-    {
-        var dateTime = await JsRunTime.InvokeAsync<string[]>("MyLib.GetCurrentTime","This is test string");
-
-        CurrentTime = new MarkupString(dateTime[0]);
-
-        StateHasChanged();
-    }
-}*@

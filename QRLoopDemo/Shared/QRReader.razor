@@ -1,14 +1,110 @@
 ﻿@using BlazorZXingJs
 
 @inject IJSRuntime JsRunTime
+@inject NavigationManager NavManager
+@inject AppState appState
 
-<h3>QRReader</h3>
+<style>
+    .box {
+        position:absolute;
+        top:0px;
+        right:0px;
+        bottom:0px;
+        left:0px;
+        width:100%;
+        height:100%;
+    }
+
+    .progress {
+        width: 100px;
+        height: 100px !important;
+        float: left; 
+        line-height: 100px;
+        background: none;
+        margin: 10px;
+        box-shadow: none;
+        position: absolute;
+        top:70%;
+        left: 50%;
+        z-index:1;
+    }
+    .progress:after {
+        content: "";
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 12px solid #fff;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    .progress>span {
+        width: 50%;
+        height: 100%;
+        overflow: hidden;
+        position: absolute;
+        top: 0;
+        z-index: 1;
+    }
+    .progress .progress-left {
+        left: 0;
+    }
+    .progress .progress-bar {
+        width: 100%;
+        height: 100%;
+        background: none;
+        border-width: 12px;
+        border-style: solid;
+        position: absolute;
+        top: 0;
+    }
+    .progress .progress-left .progress-bar {
+        left: 100%;
+        border-top-right-radius: 80px;
+        border-bottom-right-radius: 80px;
+        border-left: 0;
+        -webkit-transform-origin: center left;
+        transform-origin: center left;
+    }
+    .progress .progress-right {
+        right: 0;
+    }
+    .progress .progress-right .progress-bar {
+        left: -100%;
+        border-top-left-radius: 80px;
+        border-bottom-left-radius: 80px;
+        border-right: 0;
+        -webkit-transform-origin: center right;
+        transform-origin: center right;
+        animation: loading-1 1.8s linear forwards;
+    }
+    .progress .progress-value {
+        width: 90%;
+        height: 90%;
+        border-radius: 50%;
+        font-size: 24px;
+        line-height: 90px;
+        text-align: center;
+        position: absolute;
+        top: 5%;
+        left: 5%;
+    }
+    .progress.blue .progress-bar {
+        border-color: #049dff;
+    }
+    .progress.blue .progress-right .progress-bar {
+        -webkit-transform: rotate(@progressAngle1);
+        transform: rotate(@progressAngle1);
+    }
+    .progress.blue .progress-left .progress-bar {
+        -webkit-transform: rotate(@progressAngle2);
+        transform: rotate(@progressAngle2);
+    }
+</style>
 
 <MultiFormatReader
-    VideoWidth="400"
-    VideoHeight="400"
+    class="box"
     OnBarcodeRead="BarcodeRead">
-
     <VideoForbidden>
         <h4>no permission for videodevice</h4>
     </VideoForbidden>
@@ -18,16 +114,66 @@
     </NoVideoDevices>
 </MultiFormatReader>
 
-<h4>Reading... @progress%</h4>
-<p />
-<pre>
-@LocalBarcodeText
-</pre>
+<div class="progress blue">
+    <span class="progress-left">
+                    <span class="progress-bar"></span>
+    </span>
+    <span class="progress-right">
+                    <span class="progress-bar"></span>
+    </span>
+    <div class="progress-value">@progress%</div>
+</div>
 
 @code {
     private string? LocalBarcodeText;
     private Object? frames;
     private double progress = 0;
+    private string progressAngle1 = "0deg";
+    private string progressAngle2 = "0deg";
+
+
+    private String[] mockStr = {
+        "AAAMAAAAAAVBNjFVyC5aWam6SoddOfemrEB1c2luZyBCbGF6b3JaWGluZ0pzCgpAaW5qZWN0IElKU1J1bnRpbWUgSnNSdW5UaW1lCgo8aDM+UVJHZW5lcmF0b3I8L2gzPgoKPGRpdiBjbGFzcz0icm93IG0tMSI+Cjx0ZXg=",
+        "ZAAGAAoACAACAAsABwAACkVUJHB2Mb9FU2mmkDnFa2OD1ctsGlp1QXR3PX5lb00GMSoVU2gxBSsiGX5MIzUrfwUnDQQgQx9hdicVOTsNICEnUipcR0cZKnZoNTtHRElVTnAyaidGA2gUXT9UXXNgBi4CPQxvd3NOIGsISCt/NHdubTxhJSw8",
+        "AAAMAAF0YXJlYSBAYmluZD0iQG1zZyIgc3R5bGU9ImhlaWdodDozMDBweCIgQG9uaW5wdXQ9IkAoKGUpID0+IHsgbXNnPShzdHJpbmcpZS5WYWx1ZTt9KSIgLz4KPC9kaXY+Cgo8ZGl2IGNsYXNzPSJyb3cgbS0xIj4KPGI=",
+        "AAAMAAJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBAb25jbGljaz0iQEdlbmVyYXRlUVIiPkdlbmVyYXRlIFFSIENvZGU8L2J1dHRvbj4KPC9kaXY+Cgo8cD5Ub3RhbCBGcmFtZXM6IEBudW1GcmFtZXM8L3A+Cjw=",
+        "AAAMAANRUkNvZGVXcml0ZXIgVGV4dD0iQEN1cnJlbnRGcmFtZSIgV2lkdGg9IjQwMCIgSGVpZ3RoPSI0MDAiPjwvUVJDb2RlV3JpdGVyPgoKQGZyYW1lc1N0cgoKQGNvZGUKewogICAgcHJpdmF0ZSBTdHJpbmcgbXNnID0=",
+        "AAAMAAQgIiI7CiAgICBwcml2YXRlIFN0cmluZyBDdXJyZW50RnJhbWUgPSAiIjsKICAgIHByaXZhdGUgU3RyaW5nW10gZnJhbWVzOwogICAgcHJpdmF0ZSBpbnQgY3VyID0gMDsKICAgIHByaXZhdGUgU3lzdGVtLlRocmU=",
+        "AAAMAAVhZGluZy5UaW1lcj8gdGltZXIgPSBudWxsOwogICAgcHJpdmF0ZSBpbnQgbnVtRnJhbWVzID0gMDsKCiAgICBwcml2YXRlIHN0cmluZyBmcmFtZXNTdHIgPSAiIjsKCiAgICBhc3luYyB2b2lkIEdlbmVyYXRlUVI=",
+        "AAAMAAYoKQogICAgewogICAgICAgIGlmICh0aW1lciAhPSBudWxsKQogICAgICAgIHsKICAgICAgICAgICAgYXdhaXQgdGltZXIuRGlzcG9zZUFzeW5jKCk7CiAgICAgICAgICAgIHRpbWVyID0gbnVsbDsKICAgICAgICA=",
+        "ZAAGAAQAAQAFAAsABwAJXmR2SiIpEx4GbFIlCh14QxRvAVZIUVEICUVWRG5QUgVDG20rR2RUBGdFWH5LOh0vL3Icc3w/BT4fFxIMezdJAW8GZG1BZHoUNhAsWTMiN3doUiV4X34jM1U/LD8iRyRJVyE+TjEsLWJ4cCMuNTUSHHctLm0eSUoY",
+        "AAAMAAd9CgogICAgICAgIGZyYW1lcyA9IGF3YWl0IEpzUnVuVGltZS5JbnZva2VBc3luYzxzdHJpbmdbXT4oIk15TGliLkdldEZyYW1lcyIsIG5ldyBPYmplY3RbXSB7IG1zZywgMTIwLCAyIH0pOwoKICAgICAgICBudW0=",
+        "AAAMAAhGcmFtZXMgPSBmcmFtZXMuTGVuZ3RoOwogICAgICAgIGN1ciA9IDA7CgogICAgICAgIGZvciAoaW50IGkgPSAwOyBpIDwgZnJhbWVzLkxlbmd0aDsgaSsrKQogICAgICAgIHsKICAgICAgICAgICAgZnJhbWVzU3Q=",
+        "AAAMAAlyICs9IGZyYW1lc1tpXSArICI8YnI+IjsKICAgICAgICB9CgogICAgICAgIHRpbWVyID0gbmV3IFN5c3RlbS5UaHJlYWRpbmcuVGltZXIoYXN5bmMgKG9iamVjdD8gc3RhdGVJbmZvKSA9PgoJCXsKICAgICAgICA=",
+        "AAAMAAogICAgQ3VycmVudEZyYW1lID0gZnJhbWVzW2N1cl07CiAgICAgICAgICAgIGN1ciA9IChjdXIgKyAxKSAlIGZyYW1lcy5MZW5ndGg7CgkJCVN0YXRlSGFzQ2hhbmdlZCgpOwoJCX0sIG5ldyBTeXN0ZW0uVGhyZWE=",
+        "AAAMAAtkaW5nLkF1dG9SZXNldEV2ZW50KGZhbHNlKSwgMCwgMzAwKTsKCiAgICB9Cn0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "AQAMAAAAAAVBNjFVyC5aWam6SoddOfemrEB1c2luZyBCbGF6b3JaWGluZ0pzCgpAaW5qZWN0IElKU1J1bnRpbWUgSnNSdW5UaW1lCgo8aDM+UVJHZW5lcmF0b3I8L2gzPgoKPGRpdiBjbGFzcz0icm93IG0tMSI+Cjx0ZXg=",
+        "ZAAGAAMACAAKAAsABwAALmNjJHozBaFNVH/pkg/UfTfcg+UCH1puSXtxAi4kQkdKchEVVHdkGklRTCALcRw6czMBRwdFEkE0Jnhdc0oOMW4AWBlLEhweLTwWUBUfPBQXT2oXIF9GNVhJZjRFNmRKYHxDcBluJCVvOntFXS1sMHx6cX5ifAY9",
+        "AQAMAAF0YXJlYSBAYmluZD0iQG1zZyIgc3R5bGU9ImhlaWdodDozMDBweCIgQG9uaW5wdXQ9IkAoKGUpID0+IHsgbXNnPShzdHJpbmcpZS5WYWx1ZTt9KSIgLz4KPC9kaXY+Cgo8ZGl2IGNsYXNzPSJyb3cgbS0xIj4KPGI=",
+        "AQAMAAJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBAb25jbGljaz0iQEdlbmVyYXRlUVIiPkdlbmVyYXRlIFFSIENvZGU8L2J1dHRvbj4KPC9kaXY+Cgo8cD5Ub3RhbCBGcmFtZXM6IEBudW1GcmFtZXM8L3A+Cjw=",
+        "AQAMAANRUkNvZGVXcml0ZXIgVGV4dD0iQEN1cnJlbnRGcmFtZSIgV2lkdGg9IjQwMCIgSGVpZ3RoPSI0MDAiPjwvUVJDb2RlV3JpdGVyPgoKQGZyYW1lc1N0cgoKQGNvZGUKewogICAgcHJpdmF0ZSBTdHJpbmcgbXNnID0=",
+        "AQAMAAQgIiI7CiAgICBwcml2YXRlIFN0cmluZyBDdXJyZW50RnJhbWUgPSAiIjsKICAgIHByaXZhdGUgU3RyaW5nW10gZnJhbWVzOwogICAgcHJpdmF0ZSBpbnQgY3VyID0gMDsKICAgIHByaXZhdGUgU3lzdGVtLlRocmU=",
+        "AQAMAAVhZGluZy5UaW1lcj8gdGltZXIgPSBudWxsOwogICAgcHJpdmF0ZSBpbnQgbnVtRnJhbWVzID0gMDsKCiAgICBwcml2YXRlIHN0cmluZyBmcmFtZXNTdHIgPSAiIjsKCiAgICBhc3luYyB2b2lkIEdlbmVyYXRlUVI=",
+        "AQAMAAYoKQogICAgewogICAgICAgIGlmICh0aW1lciAhPSBudWxsKQogICAgICAgIHsKICAgICAgICAgICAgYXdhaXQgdGltZXIuRGlzcG9zZUFzeW5jKCk7CiAgICAgICAgICAgIHRpbWVyID0gbnVsbDsKICAgICAgICA=",
+        "ZAAGAAcACAADAAYACwAAJmpJJBlmV6giGiuPwE6ZODeIxaNYCl5mX1IyVmFZFzgGPhg/VHdkGklRTCATDk46bjMJBFIXEko0NzAKNwMcY3sEUA8XcD0ZOTgRGHpXRmQqWCNKfh0HZjsBJ3oCcyBCaWc9EH12eiU8f2IQYjgkTjk3fwoqLkN8",
+        "AQAMAAd9CgogICAgICAgIGZyYW1lcyA9IGF3YWl0IEpzUnVuVGltZS5JbnZva2VBc3luYzxzdHJpbmdbXT4oIk15TGliLkdldEZyYW1lcyIsIG5ldyBPYmplY3RbXSB7IG1zZywgMTIwLCAyIH0pOwoKICAgICAgICBudW0=",
+        "AQAMAAhGcmFtZXMgPSBmcmFtZXMuTGVuZ3RoOwogICAgICAgIGN1ciA9IDA7CgogICAgICAgIGZvciAoaW50IGkgPSAwOyBpIDwgZnJhbWVzLkxlbmd0aDsgaSsrKQogICAgICAgIHsKICAgICAgICAgICAgZnJhbWVzU3Q=",
+        "AQAMAAlyICs9IGZyYW1lc1tpXSArICI8YnI+IjsKICAgICAgICB9CgogICAgICAgIHRpbWVyID0gbmV3IFN5c3RlbS5UaHJlYWRpbmcuVGltZXIoYXN5bmMgKG9iamVjdD8gc3RhdGVJbmZvKSA9PgoJCXsKICAgICAgICA=",
+        "AQAMAAogICAgQ3VycmVudEZyYW1lID0gZnJhbWVzW2N1cl07CiAgICAgICAgICAgIGN1ciA9IChjdXIgKyAxKSAlIGZyYW1lcy5MZW5ndGg7CgkJCVN0YXRlSGFzQ2hhbmdlZCgpOwoJCX0sIG5ldyBTeXN0ZW0uVGhyZWE=",
+        "AQAMAAtkaW5nLkF1dG9SZXNldEV2ZW50KGZhbHNlKSwgMCwgMzAwKTsKCiAgICB9Cn0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    };
+
+    private int cur = 0;
+    System.Threading.Timer timer = null;
+
+    protected override void OnInitialized()
+    {
+        timer = new System.Threading.Timer(async (object? stateInfo) =>
+        {
+            cur = (cur + 1) % mockStr.Length;
+            BarcodeRead(mockStr[cur]);
+        }, new System.Threading.AutoResetEvent(false), 0, 500);
+    }
 
     private async void BarcodeRead(string code)
     {
@@ -35,13 +181,24 @@
 
         if ("1".Equals(res[0].ToString()))
         {
-            LocalBarcodeText = res[1].ToString();
+            appState.CapturedMessage = res[1].ToString();
+            NavManager.NavigateTo("/scanresult");
         } 
         else
         {
             frames = res[1];
             progress = await JsRunTime.InvokeAsync<double>("MyLib.GetProgress", new Object?[] { frames });
             progress = Math.Floor(progress * 100);
+
+            double angle = 360.0 * progress / 100.0;
+
+            if (angle > 180.0) {
+                progressAngle1 = "180deg";
+                progressAngle2 = (angle - 180.0).ToString() + "deg";
+            } else
+            {
+                progressAngle1 = angle.ToString() + "deg";
+            }
         }
         StateHasChanged();
     }
